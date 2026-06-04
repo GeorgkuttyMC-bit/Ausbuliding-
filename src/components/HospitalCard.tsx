@@ -1,5 +1,5 @@
 import { Hospital } from '../types';
-import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HospitalCardProps {
@@ -33,6 +33,24 @@ export function HospitalCard({ hospital, index }: HospitalCardProps) {
               <div className="flex items-center gap-1.5 text-gray-500 mt-1">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm font-medium">{hospital.location}</span>
+                {hospital.postedDaysAgo !== undefined && (
+                  <>
+                    <span className="mx-1">•</span>
+                    <Clock className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                      {hospital.postedDaysAgo === 0 ? 'Posted today' : `Posted ${hospital.postedDaysAgo} days ago`}
+                    </span>
+                  </>
+                )}
+                {hospital.deadline && (
+                  <>
+                    <span className="mx-1">•</span>
+                    <Calendar className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-700">
+                      Deadline: {hospital.deadline}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>

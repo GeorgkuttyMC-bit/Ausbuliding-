@@ -63,9 +63,17 @@ export default async function handler(req: any, res: any) {
               openingDetails: {
                 type: Type.STRING,
                 description: 'Details about the Ausbildung (apprenticeship) openings, requirements, or benefits.',
+              },
+              postedDaysAgo: {
+                type: Type.INTEGER,
+                description: 'How many days ago the opening was posted.',
+              },
+              deadline: {
+                type: Type.STRING,
+                description: 'The last date to apply for this Ausbildung position.',
               }
             },
-            required: ['hospitalName', 'contactNumber', 'mailId', 'location', 'history', 'openingDetails'],
+            required: ['hospitalName', 'contactNumber', 'mailId', 'location', 'history', 'openingDetails', 'postedDaysAgo', 'deadline'],
           },
         },
       },

@@ -5,6 +5,8 @@ export interface Hospital {
   location: string;
   history?: string;
   openingDetails?: string;
+  postedDaysAgo?: number;
+  deadline?: string;
   isNew?: boolean;
   isEmailVerified?: boolean | null;
 }
