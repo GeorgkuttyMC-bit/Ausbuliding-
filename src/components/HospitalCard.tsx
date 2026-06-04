@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { Hospital } from '../types';
-import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HospitalCardProps {
@@ -8,12 +9,32 @@ interface HospitalCardProps {
 }
 
 export function HospitalCard({ hospital, index }: HospitalCardProps) {
+  const hospitalKey = `applied-${hospital.hospitalName}-${hospital.location}`.replace(/\s+/g, '-').toLowerCase();
+  const [isApplied, setIsApplied] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(hospitalKey);
+    if (stored) {
+      setIsApplied(stored === 'true');
+    }
+  }, [hospitalKey]);
+
+  const toggleApplied = () => {
+    const newValue = !isApplied;
+    setIsApplied(newValue);
+    localStorage.setItem(hospitalKey, String(newValue));
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.3 }}
-      className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 sm:p-8 flex flex-col gap-6 hover:shadow-lg hover:border-slate-300/80 transition-all duration-300"
+      className={`rounded-2xl border p-6 sm:p-8 flex flex-col gap-6 shadow-sm hover:shadow-lg transition-all duration-300 ${
+        isApplied 
+          ? 'bg-slate-50/50 border-slate-200/50' 
+          : 'bg-white border-slate-200/60 hover:border-slate-300/80'
+      }`}
     >
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
         <div className="flex-1 space-y-4">
@@ -93,6 +114,26 @@ export function HospitalCard({ hospital, index }: HospitalCardProps) {
               <span className="text-sm font-semibold text-slate-700 truncate flex-1">{hospital.website}</span>
             </a>
           )}
+          
+          <button 
+            onClick={toggleApplied}
+            className={`mt-2 group flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all border ${
+              isApplied 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-700 shadow-inner' 
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center justify-center w-6 h-6 rounded-md transition-all ${
+                isApplied ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-300 group-hover:bg-slate-200 group-hover:text-slate-400'
+              }`}>
+                {isApplied && <Check className="w-4 h-4" />}
+              </div>
+              <span className="text-sm font-bold">
+                {isApplied ? 'Application Submitted' : 'Mark as Applied'}
+              </span>
+            </div>
+          </button>
         </div>
       </div>
 
