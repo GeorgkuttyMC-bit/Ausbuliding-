@@ -28,10 +28,11 @@ async function startServer() {
       });
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: `Find German Ausbildung Nursing (Pflegefachmann/Pflegefachfrau) openings or major hospitals offering these programs in Germany. 
-                   Focus on ${query || 'entire Germany'}. 
-                   Provide 5-10 real (or highly realistic) hospitals.
+        model: 'gemini-2.5-flash',
+        contents: `Find German Ausbildung Nursing (Pflegefachmann/Pflegefachfrau) openings in hospitals and care homes. 
+                   Focus on ${query || 'various major cities across Germany'}. 
+                   Provide a comprehensive list of 15-25 real (or highly realistic) hospitals and care homes.
+                   Make sure to precisely specify the city name in the 'location' field.
                    Return the data in the requested JSON structure.`,
         config: {
           responseMimeType: 'application/json',

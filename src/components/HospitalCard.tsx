@@ -21,8 +21,13 @@ export function HospitalCard({ hospital, index }: HospitalCardProps) {
             <Building2 className="w-5 h-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-gray-900 leading-tight">
+            <h3 className="text-xl font-semibold text-gray-900 leading-tight flex items-center gap-2">
               {hospital.hospitalName}
+              {hospital.isNew && (
+                <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                  New
+                </span>
+              )}
             </h3>
             <div className="flex items-center gap-1.5 text-gray-500 mt-1">
               <MapPin className="w-4 h-4" />

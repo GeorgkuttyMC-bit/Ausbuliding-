@@ -3,6 +3,7 @@ export interface Hospital {
   contactNumber: string;
   mailId: string;
   location: string;
+  isNew?: boolean;
 }
 
 export interface SearchResponse {

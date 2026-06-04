@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { useState, FormEvent, useEffect } from 'react';
-import { Search, Stethoscope, Loader2 } from 'lucide-react';
+import { Search, Stethoscope, Loader2, MapPin } from 'lucide-react';
 import { Hospital } from './types';
 import { HospitalCard } from './components/HospitalCard';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,6 +19,52 @@ export default function App() {
   useEffect(() => {
     handleSearch(new Event('submit') as unknown as FormEvent);
   }, []);
+
+  // Background polling every 10 seconds
+  useEffect(() => {
+    if (!searched) return;
+    
+    // Create an interval to poll for new results
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+        
+        if (response.ok) {
+          const data = await JSON.parse(await response.text());
+          const fetchedResults: Hospital[] = data.results || [];
+          
+          setResults(prevResults => {
+            const newResultsList = [...prevResults];
+            let hasNew = false;
+            
+            // Check for new hospitals
+            fetchedResults.forEach(newHospital => {
+              const exists = prevResults.some(
+                existing => 
+                  existing.hospitalName.toLowerCase() === newHospital.hospitalName.toLowerCase() && 
+                  existing.location.toLowerCase() === newHospital.location.toLowerCase()
+              );
+              
+              if (!exists) {
+                newResultsList.push({ ...newHospital, isNew: true });
+                hasNew = true;
+              }
+            });
+            
+            return hasNew ? newResultsList : prevResults;
+          });
+        }
+      } catch (err) {
+        console.error('Background polling error:', err);
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [searched, query]);
 
   const handleSearch = async (e: FormEvent) => {
     e?.preventDefault();
@@ -126,11 +172,31 @@ export default function App() {
                 <p>Querying hospital database...</p>
               </motion.div>
             ) : results.length > 0 ? (
-              <div className="space-y-4">
-                {results.map((hospital, i) => (
-                  <HospitalCard key={i} hospital={hospital} index={i} />
+              <motion.div key="results" className="space-y-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                {Object.entries(
+                  results.reduce((acc, hospital) => {
+                    // Try to extract just the city name if it has commas like "Berlin, Germany"
+                    const city = hospital.location.split(',')[0].trim();
+                    if (!acc[city]) acc[city] = [];
+                    acc[city].push(hospital);
+                    return acc;
+                  }, {} as Record<string, Hospital[]>)
+                )
+                .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
+                .map(([city, cityHospitals]) => (
+                  <div key={city} className="space-y-4">
+                    <h4 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2">
+                      <MapPin className="w-6 h-6 text-blue-600" />
+                      {city}
+                    </h4>
+                    <div className="space-y-4">
+                      {cityHospitals.map((hospital, i) => (
+                        <HospitalCard key={i} hospital={hospital} index={i} />
+                      ))}
+                    </div>
+                  </div>
                 ))}
-              </div>
+              </motion.div>
             ) : searched && !loading ? (
               <motion.div 
                 key="empty"
