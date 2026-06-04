@@ -6,6 +6,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { Search, Stethoscope, Loader2, MapPin } from 'lucide-react';
 import { Hospital } from './types';
 import { HospitalCard } from './components/HospitalCard';
+import { HospitalTable } from './components/HospitalTable';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
@@ -266,11 +267,7 @@ export default function App() {
                         </div>
                         {city}
                       </h4>
-                      <div className="grid grid-cols-1 gap-6">
-                        {cityHospitals.map((hospital, i) => (
-                          <HospitalCard key={`gen-${i}`} hospital={hospital} index={i} />
-                        ))}
-                      </div>
+                        <HospitalTable hospitals={cityHospitals} />
                     </div>
                   ))}
                 </div>
@@ -300,11 +297,7 @@ export default function App() {
                         </div>
                         {city}
                       </h4>
-                      <div className="grid grid-cols-1 gap-6">
-                        {cityHospitals.map((hospital, i) => (
-                          <HospitalCard key={`aus-${i}`} hospital={hospital} index={i} />
-                        ))}
-                      </div>
+                        <HospitalTable hospitals={cityHospitals} />
                     </div>
                   ))}
                 </div>
