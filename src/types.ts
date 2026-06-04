@@ -3,6 +3,8 @@ export interface Hospital {
   contactNumber: string;
   mailId: string;
   location: string;
+  history?: string;
+  openingDetails?: string;
   isNew?: boolean;
 }
 

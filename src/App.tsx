@@ -20,7 +20,7 @@ export default function App() {
     handleSearch(new Event('submit') as unknown as FormEvent);
   }, []);
 
-  // Background polling every 10 seconds
+  // Background polling every 60 seconds
   useEffect(() => {
     if (!searched) return;
     
@@ -32,6 +32,13 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query }),
         });
+        
+        if (response.status === 429) {
+          // Stop polling if we hit rate limits
+          clearInterval(interval);
+          setError('API Rate limit reached. Background polling disabled temporarily.');
+          return;
+        }
         
         if (response.ok) {
           const data = await JSON.parse(await response.text());
@@ -61,7 +68,7 @@ export default function App() {
       } catch (err) {
         console.error('Background polling error:', err);
       }
-    }, 10000);
+    }, 12 * 60 * 60 * 1000); // Poll every 12 hours
 
     return () => clearInterval(interval);
   }, [searched, query]);
@@ -79,6 +86,9 @@ export default function App() {
       });
       
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('API Rate limit exceeded. Please wait a moment before trying again.');
+        }
         const errorText = await response.text();
         let errorMessage = 'Failed to fetch data';
         try {

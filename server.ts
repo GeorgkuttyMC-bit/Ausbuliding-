@@ -28,7 +28,7 @@ async function startServer() {
       });
 
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.1-flash-lite',
         contents: `Find German Ausbildung Nursing (Pflegefachmann/Pflegefachfrau) openings in hospitals and care homes. 
                    Focus on ${query || 'various major cities across Germany'}. 
                    Provide a comprehensive list of 15-25 real (or highly realistic) hospitals and care homes.
@@ -56,9 +56,17 @@ async function startServer() {
                 location: {
                   type: Type.STRING,
                   description: 'The city or region where the hospital is located.',
+                },
+                history: {
+                  type: Type.STRING,
+                  description: 'A brief history or background of the hospital or care home.',
+                },
+                openingDetails: {
+                  type: Type.STRING,
+                  description: 'Details about the Ausbildung (apprenticeship) openings, requirements, or benefits.',
                 }
               },
-              required: ['hospitalName', 'contactNumber', 'mailId', 'location'],
+              required: ['hospitalName', 'contactNumber', 'mailId', 'location', 'history', 'openingDetails'],
             },
           },
         },
@@ -72,7 +80,8 @@ async function startServer() {
       res.json({ results });
     } catch (error: any) {
       console.error('Error in /api/search:', error);
-      res.status(500).json({ error: error?.message || 'Failed to search for nursing openings' });
+      const statusValue = error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota') ? 429 : 500;
+      res.status(statusValue).json({ error: error?.message || 'Failed to search for nursing openings' });
     }
   });
 
