@@ -1,0 +1,6 @@
+{
+  "name": "Klinik Sucher",
+  "description": "Finds German Ausbildung Nursing (Pflegefachmann/-frau) openings in hospitals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
