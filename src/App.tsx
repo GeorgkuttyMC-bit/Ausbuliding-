@@ -13,6 +13,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [results, setResults] = useState<Hospital[]>([]);
+  const [ausbildungResults, setAusbildungResults] = useState<Hospital[]>([]);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
@@ -45,6 +46,7 @@ export default function App() {
         if (response.ok) {
           const data = await JSON.parse(await response.text());
           const fetchedResults: Hospital[] = data.results || [];
+          const fetchedAusbildungResults: Hospital[] = data.ausbildungResults || [];
           
           setResults(prevResults => {
             const newResultsList = [...prevResults];
@@ -64,6 +66,19 @@ export default function App() {
               }
             });
             
+            return hasNew ? newResultsList : prevResults;
+          });
+
+          setAusbildungResults(prevResults => {
+            const newResultsList = [...prevResults];
+            let hasNew = false;
+            fetchedAusbildungResults.forEach(newHospital => {
+              const exists = prevResults.some(existing => existing.hospitalName.toLowerCase() === newHospital.hospitalName.toLowerCase());
+              if (!exists) {
+                newResultsList.push({ ...newHospital, isNew: true });
+                hasNew = true;
+              }
+            });
             return hasNew ? newResultsList : prevResults;
           });
         }
@@ -100,11 +115,14 @@ export default function App() {
       
       const data = await JSON.parse(await response.text());
       const newResults = data.results || [];
+      const newAusbildungResults = data.ausbildungResults || [];
       
       if (append) {
         setResults(prev => [...prev, ...newResults]);
+        setAusbildungResults(prev => [...prev, ...newAusbildungResults]);
       } else {
         setResults(newResults);
+        setAusbildungResults(newAusbildungResults);
       }
       
       setPage(targetPage);
@@ -203,8 +221,8 @@ export default function App() {
 
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200/50">
             <h3 className="text-lg font-medium text-slate-700">
-              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length}</span>}
-              {searched && !loading && " Hospitals Found"}
+              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length + ausbildungResults.length}</span>}
+              {searched && !loading && " Total Opportunities Found"}
               {loading && "Searching for matching institutions..."}
               {!searched && !loading && "Enter a location to discover opportunities."}
             </h3>
@@ -220,37 +238,78 @@ export default function App() {
                 className="flex flex-col items-center justify-center py-20 text-gray-500"
               >
                 <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
-                <p>Querying hospital database...</p>
+                <p>Querying hospital databases and Ausbildung.de...</p>
               </motion.div>
-            ) : results.length > 0 ? (
-              <motion.div key="results" className="space-y-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {Object.entries(
-                  results.reduce((acc, hospital) => {
-                    // Try to extract just the city name if it has commas like "Berlin, Germany"
-                    const city = hospital.location.split(',')[0].trim();
-                    if (!acc[city]) acc[city] = [];
-                    acc[city].push(hospital);
-                    return acc;
-                  }, {} as Record<string, Hospital[]>)
-                )
-                .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
-                .map(([city, cityHospitals]: [string, Hospital[]]) => (
-                  <div key={city} className="space-y-6">
-                    <h4 className="text-3xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
-                      <div className="bg-indigo-50 p-2 rounded-lg">
-                        <MapPin className="w-6 h-6 text-indigo-600" />
-                      </div>
-                      {city}
-                    </h4>
-                    <div className="grid grid-cols-1 gap-6">
-                      {cityHospitals.map((hospital, i) => (
-                        <HospitalCard key={i} hospital={hospital} index={i} />
-                      ))}
-                    </div>
+            ) : results.length > 0 || ausbildungResults.length > 0 ? (
+              <motion.div key="results" className="grid grid-cols-1 lg:grid-cols-2 gap-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                {/* Left Column: General Openings */}
+                <div className="space-y-10">
+                  <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
+                    <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
+                       General Openings
+                    </h3>
                   </div>
-                ))}
+                  {Object.entries(
+                    results.reduce((acc, hospital) => {
+                      const city = hospital.location.split(',')[0].trim();
+                      if (!acc[city]) acc[city] = [];
+                      acc[city].push(hospital);
+                      return acc;
+                    }, {} as Record<string, Hospital[]>)
+                  )
+                  .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
+                  .map(([city, cityHospitals]: [string, Hospital[]]) => (
+                    <div key={`general-${city}`} className="space-y-6">
+                      <h4 className="text-2xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
+                        <div className="bg-indigo-50 p-2 rounded-lg">
+                          <MapPin className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        {city}
+                      </h4>
+                      <div className="grid grid-cols-1 gap-6">
+                        {cityHospitals.map((hospital, i) => (
+                          <HospitalCard key={`gen-${i}`} hospital={hospital} index={i} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Right Column: Ausbildung.de Openings */}
+                <div className="space-y-10">
+                  <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
+                    <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
+                      <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Source</span>
+                      Data from Ausbildung.de
+                    </h3>
+                  </div>
+                  {Object.entries(
+                    ausbildungResults.reduce((acc, hospital) => {
+                      const city = hospital.location.split(',')[0].trim();
+                      if (!acc[city]) acc[city] = [];
+                      acc[city].push(hospital);
+                      return acc;
+                    }, {} as Record<string, Hospital[]>)
+                  )
+                  .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
+                  .map(([city, cityHospitals]: [string, Hospital[]]) => (
+                    <div key={`aus-${city}`} className="space-y-6">
+                      <h4 className="text-2xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
+                        <div className="bg-emerald-50 p-2 rounded-lg">
+                          <MapPin className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        {city}
+                      </h4>
+                      <div className="grid grid-cols-1 gap-6">
+                        {cityHospitals.map((hospital, i) => (
+                          <HospitalCard key={`aus-${i}`} hospital={hospital} index={i} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 
-                <div className="pt-10 text-center pb-8">
+                <div className="col-span-1 lg:col-span-2 pt-10 text-center pb-8">
                   <button
                     onClick={loadMore}
                     disabled={loadingMore}
