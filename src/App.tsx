@@ -130,61 +130,83 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-10 transition-all">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 h-16">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <Stethoscope className="w-5 h-5 text-white" />
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-sm text-white">
+              <Stethoscope className="w-5 h-5" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Klinik Sucher</h1>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight font-display">Klinik Sucher</h1>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="max-w-2xl text-center mx-auto mb-10">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight">
-            Find Nursing Ausbildung Openings
-          </h2>
-          <p className="text-lg text-gray-600">
-            Search for Pflegefachmann/Pflegefachfrau apprenticeships across hospitals in Germany. We provide direct contact details to help you apply.
-          </p>
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 relative">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-blue-100/50 blur-[100px] rounded-full pointer-events-none" />
+        
+        <div className="max-w-3xl text-center mx-auto mb-12 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="inline-block py-1 px-3 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-sm font-medium tracking-wide mb-5">
+              Germany Wide Search
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight font-display leading-tight">
+              Find Your Nursing Ausbildung <br className="hidden md:block"/> 
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+                Opportunities
+              </span>
+            </h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Search for Pflegefachmann/Pflegefachfrau apprenticeships across hospitals and care homes in Germany. Discover verified contact details and direct openings.
+            </p>
+          </motion.div>
         </div>
 
-        <div className="max-w-2xl mx-auto mb-12">
-          <form onSubmit={handleSearch} className="relative shadow-sm rounded-xl overflow-hidden bg-white border border-gray-200">
-            <div className="flex items-center px-4 py-1">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="max-w-2xl mx-auto mb-16 relative z-10"
+        >
+          <form onSubmit={handleSearch} className="relative shadow-xl shadow-blue-900/5 rounded-2xl overflow-hidden bg-white border border-gray-200/80 p-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+            <div className="flex items-center px-4 py-2">
               <Search className="w-5 h-5 text-gray-400 shrink-0" />
               <input
                 type="text"
-                placeholder="Search by city, region, or hospital name..."
-                className="w-full px-4 py-4 focus:outline-none text-gray-900 placeholder:text-gray-400 text-lg"
+                placeholder="Search by city, region, or explicit hospital name..."
+                className="w-full px-4 py-3 focus:outline-none text-slate-900 placeholder:text-gray-400 text-lg bg-transparent"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3.5 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center gap-2 shadow-sm"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Search'}
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center font-medium mb-6">
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-50/80 border border-red-100 text-red-600 p-4 rounded-xl text-center font-medium mb-8 backdrop-blur-sm">
               {error}
-            </div>
+            </motion.div>
           )}
 
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {searched && !loading && `${results.length} Hospitals Found`}
-              {loading && "Searching hospitals..."}
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200/50">
+            <h3 className="text-lg font-medium text-slate-700">
+              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length}</span>}
+              {searched && !loading && " Hospitals Found"}
+              {loading && "Searching for matching institutions..."}
+              {!searched && !loading && "Enter a location to discover opportunities."}
             </h3>
           </div>
 
@@ -212,13 +234,15 @@ export default function App() {
                   }, {} as Record<string, Hospital[]>)
                 )
                 .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
-                .map(([city, cityHospitals]) => (
-                  <div key={city} className="space-y-4">
-                    <h4 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2">
-                      <MapPin className="w-6 h-6 text-blue-600" />
+                .map(([city, cityHospitals]: [string, Hospital[]]) => (
+                  <div key={city} className="space-y-6">
+                    <h4 className="text-3xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
+                      <div className="bg-indigo-50 p-2 rounded-lg">
+                        <MapPin className="w-6 h-6 text-indigo-600" />
+                      </div>
                       {city}
                     </h4>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-6">
                       {cityHospitals.map((hospital, i) => (
                         <HospitalCard key={i} hospital={hospital} index={i} />
                       ))}
@@ -226,26 +250,28 @@ export default function App() {
                   </div>
                 ))}
                 
-                <div className="pt-8 text-center pb-4">
+                <div className="pt-10 text-center pb-8">
                   <button
                     onClick={loadMore}
                     disabled={loadingMore}
-                    className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto shadow-sm"
+                    className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 px-8 py-3.5 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center gap-2 mx-auto shadow-sm hover:shadow active:scale-95"
                   >
-                    {loadingMore ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Load Next Page'}
+                    {loadingMore ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Load More Opportunities'}
                   </button>
                 </div>
               </motion.div>
             ) : searched && !loading ? (
               <motion.div 
                 key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-20 bg-white rounded-xl border border-gray-200"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-24 bg-white/50 backdrop-blur-sm rounded-3xl border border-dashed border-gray-300"
               >
-                <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900">No hospitals found</h3>
-                <p className="text-gray-500 mt-1">Try searching for a different city or region like "Berlin" or "Bayern".</p>
+                <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Stethoscope className="w-10 h-10 text-slate-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-900 font-display mb-2">No hospitals found</h3>
+                <p className="text-slate-500 max-w-md mx-auto">Try searching for a different city or region like "Berlin", "Munich", or "Bayern" to see available apprenticeship spots.</p>
               </motion.div>
             ) : null}
           </AnimatePresence>

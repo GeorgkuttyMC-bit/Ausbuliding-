@@ -62,6 +62,10 @@ async function startServer() {
                   type: Type.STRING,
                   description: 'The city or region where the hospital is located.',
                 },
+                website: {
+                  type: Type.STRING,
+                  description: 'The official website URL of the hospital or care home.',
+                },
                 history: {
                   type: Type.STRING,
                   description: 'A brief history or background of the hospital or care home.',
@@ -73,13 +77,9 @@ async function startServer() {
                 postedDaysAgo: {
                   type: Type.INTEGER,
                   description: 'How many days ago the opening was posted.',
-                },
-                deadline: {
-                  type: Type.STRING,
-                  description: 'The last date to apply for this Ausbildung position.',
                 }
               },
-              required: ['hospitalName', 'contactNumber', 'mailId', 'location', 'history', 'openingDetails', 'postedDaysAgo', 'deadline'],
+              required: ['hospitalName', 'contactNumber', 'mailId', 'location', 'website', 'history', 'openingDetails', 'postedDaysAgo'],
             },
           },
         },

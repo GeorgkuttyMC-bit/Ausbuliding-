@@ -3,10 +3,10 @@ export interface Hospital {
   contactNumber: string;
   mailId: string;
   location: string;
+  website?: string;
   history?: string;
   openingDetails?: string;
   postedDaysAgo?: number;
-  deadline?: string;
   isNew?: boolean;
   isEmailVerified?: boolean | null;
 }
