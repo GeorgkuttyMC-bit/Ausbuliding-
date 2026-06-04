@@ -11,16 +11,18 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function App() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [results, setResults] = useState<Hospital[]>([]);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
 
   // Initial load to show something immediately
   useEffect(() => {
     handleSearch(new Event('submit') as unknown as FormEvent);
   }, []);
 
-  // Background polling every 60 seconds
+  // Background polling every 12 hours
   useEffect(() => {
     if (!searched) return;
     
@@ -30,7 +32,7 @@ export default function App() {
         const response = await fetch('/api/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query }),
+          body: JSON.stringify({ query, page: 1 }),
         });
         
         if (response.status === 429) {
@@ -73,16 +75,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, [searched, query]);
 
-  const handleSearch = async (e: FormEvent) => {
-    e?.preventDefault();
-    setLoading(true);
-    setError('');
-    
+  const fetchResults = async (targetPage: number, append: boolean = false) => {
     try {
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, page: targetPage }),
       });
       
       if (!response.ok) {
@@ -101,13 +99,34 @@ export default function App() {
       }
       
       const data = await JSON.parse(await response.text());
-      setResults(data.results || []);
+      const newResults = data.results || [];
+      
+      if (append) {
+        setResults(prev => [...prev, ...newResults]);
+      } else {
+        setResults(newResults);
+      }
+      
+      setPage(targetPage);
       setSearched(true);
     } catch (err: any) {
       setError(err?.message || 'An error occurred while finding openings. Please try again.');
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const handleSearch = async (e: FormEvent) => {
+    e?.preventDefault();
+    setLoading(true);
+    setError('');
+    await fetchResults(1, false);
+    setLoading(false);
+  };
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    setError('');
+    await fetchResults(page + 1, true);
+    setLoadingMore(false);
   };
 
   return (
@@ -206,6 +225,16 @@ export default function App() {
                     </div>
                   </div>
                 ))}
+                
+                <div className="pt-8 text-center pb-4">
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 px-8 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto shadow-sm"
+                  >
+                    {loadingMore ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Load Next Page'}
+                  </button>
+                </div>
               </motion.div>
             ) : searched && !loading ? (
               <motion.div 

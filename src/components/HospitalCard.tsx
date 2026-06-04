@@ -1,5 +1,5 @@
 import { Hospital } from '../types';
-import { Building2, Phone, Mail, MapPin, History, GraduationCap } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HospitalCardProps {
@@ -51,7 +51,13 @@ export function HospitalCard({ hospital, index }: HospitalCardProps) {
             className="flex items-center gap-3 bg-gray-50 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors"
           >
             <Mail className="w-4 h-4 text-gray-600 shrink-0" />
-            <span className="text-sm font-medium text-gray-700 truncate">{hospital.mailId}</span>
+            <span className="text-sm font-medium text-gray-700 truncate flex-1">{hospital.mailId}</span>
+            {hospital.isEmailVerified === true && (
+              <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" title="Email Domain Verified" />
+            )}
+            {hospital.isEmailVerified === false && (
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" title="Could not verify email domain" />
+            )}
           </a>
         </div>
       </div>

@@ -6,6 +6,7 @@ export interface Hospital {
   history?: string;
   openingDetails?: string;
   isNew?: boolean;
+  isEmailVerified?: boolean | null;
 }
 
 export interface SearchResponse {
