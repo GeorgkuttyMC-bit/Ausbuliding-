@@ -33,11 +33,18 @@ export default function App() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch data');
+        const errorText = await response.text();
+        let errorMessage = 'Failed to fetch data';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `API Error (${response.status}): ${errorText.substring(0, 100)}`;
+        }
+        throw new Error(errorMessage);
       }
       
-      const data = await response.json();
+      const data = await JSON.parse(await response.text());
       setResults(data.results || []);
       setSearched(true);
     } catch (err: any) {
