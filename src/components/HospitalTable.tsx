@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Hospital } from '../types';
 import { Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useApplicationState } from './useApplicationState';
 
 interface HospitalTableProps {
   hospitals: Hospital[];
@@ -31,22 +32,13 @@ export function HospitalTable({ hospitals }: HospitalTableProps) {
 }
 
 function HospitalTableRow({ hospital, index }: { hospital: Hospital, index: number }) {
-  const hospitalKey = `applied-${hospital.hospitalName}-${hospital.location}`.replace(/\s+/g, '-').toLowerCase();
-  const [isApplied, setIsApplied] = useState(false);
+  const hospitalKey = `applied-${hospital.hospitalName}-${hospital.location}`.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
   const [expanded, setExpanded] = useState(false);
+  const { isApplied, toggleApplied } = useApplicationState(hospitalKey, hospital.hospitalName, hospital.location);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(hospitalKey);
-    if (stored) {
-      setIsApplied(stored === 'true');
-    }
-  }, [hospitalKey]);
-
-  const toggleApplied = (e: React.MouseEvent) => {
+  const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newValue = !isApplied;
-    setIsApplied(newValue);
-    localStorage.setItem(hospitalKey, String(newValue));
+    toggleApplied();
   };
 
   return (
@@ -109,7 +101,7 @@ function HospitalTableRow({ hospital, index }: { hospital: Hospital, index: numb
 
         <td className="py-4 px-6 align-top text-right">
           <button 
-            onClick={toggleApplied}
+            onClick={handleToggle}
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all border text-xs font-bold ${
               isApplied 
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100' 

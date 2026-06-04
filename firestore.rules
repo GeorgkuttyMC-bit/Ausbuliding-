@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { return request.resource.data; }
+    
+    function isValidUser(data) {
+      return data.keys().hasAll(['name']) 
+        && data.keys().size() == 1
+        && data.name is string && data.name.size() <= 100;
+    }
+
+    function isValidApplication(data) {
+      return data.keys().hasAll(['userId', 'hospitalName', 'location', 'appliedAt']) 
+        && data.keys().size() == 4
+        && data.userId == request.auth.uid
+        && data.hospitalName is string && data.hospitalName.size() <= 200
+        && data.location is string && data.location.size() <= 200
+        && data.appliedAt is number;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId 
+        && isValidId(userId)
+        && isValidUser(incoming());
+      allow update: if isSignedIn()
+        && request.auth.uid == userId
+        && isValidUser(incoming());
+    }
+
+    match /users/{userId}/applications/{applicationId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId 
+        && isValidId(applicationId) 
+        && isValidApplication(incoming());
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Application": {
+      "title": "Application",
+      "description": "A nursing Ausbildung application made by a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "hospitalName": { "type": "string" },
+        "location": { "type": "string" },
+        "appliedAt": { "type": "number", "description": "Timestamp of application" }
+      },
+      "required": ["userId", "hospitalName", "location", "appliedAt"]
+    },
+    "User": {
+       "title": "User",
+       "description": "User profile.",
+       "type": "object",
+       "properties": {
+         "name": { "type": "string" }
+       },
+       "required": ["name"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles."
+    },
+    "users/{userId}/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/Application" },
+      "description": "Applications submitted by a specific user."
+    }
+  }
+}

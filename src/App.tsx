@@ -3,13 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { useState, FormEvent, useEffect } from 'react';
-import { Search, Stethoscope, Loader2, MapPin } from 'lucide-react';
+import { Search, Stethoscope, Loader2, MapPin, Mail, User, LogOut, FileCheck } from 'lucide-react';
 import { Hospital } from './types';
 import { HospitalCard } from './components/HospitalCard';
 import { HospitalTable } from './components/HospitalTable';
+import { EmailTable } from './components/EmailTable';
+import { customEmails } from './data/emails';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from './components/AuthProvider';
+import { useApplicationCount } from './components/useApplicationCount';
 
 export default function App() {
+  const { user, loading: authLoading, loginWithGoogle, logout } = useAuth();
+  const applicationCount = useApplicationCount();
+  const [activeTab, setActiveTab] = useState<'search' | 'emails'>('search');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -152,11 +159,43 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-blue-100 selection:text-blue-900">
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-10 transition-all">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 h-16">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-sm text-white">
-              <Stethoscope className="w-5 h-5" />
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-sm text-white">
+                <Stethoscope className="w-5 h-5" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-800 tracking-tight font-display">Klinik Sucher</h1>
             </div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight font-display">Klinik Sucher</h1>
+            <div className="flex items-center gap-4">
+              {!authLoading && user ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 py-1.5 px-3 rounded-full text-sm font-bold shadow-inner">
+                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                    <span>{applicationCount} Applied</span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 py-1.5 px-3 rounded-full">
+                    <div className="flex items-center gap-2">
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt={user.displayName || 'User'} className="w-6 h-6 rounded-full" />
+                      ) : (
+                        <User className="w-4 h-4 text-slate-500" />
+                      )}
+                      <span className="text-sm font-medium text-slate-700">{user.displayName || 'User'}</span>
+                    </div>
+                    <button onClick={logout} className="text-slate-400 hover:text-red-500 transition-colors ml-2" title="Log out">
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : !authLoading && !user ? (
+                <button
+                  onClick={loginWithGoogle}
+                  className="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-2 rounded-full shadow-sm"
+                >
+                  Log In
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       </header>
@@ -186,13 +225,42 @@ export default function App() {
           </motion.div>
         </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="max-w-2xl mx-auto mb-16 relative z-10"
-        >
-          <form onSubmit={handleSearch} className="relative shadow-xl shadow-blue-900/5 rounded-2xl overflow-hidden bg-white border border-gray-200/80 p-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+        <div className="flex justify-center mb-10 relative z-10">
+          <div className="inline-flex bg-slate-200/50 p-1.5 rounded-xl backdrop-blur-sm border border-slate-200">
+            <button
+              onClick={() => setActiveTab('search')}
+              className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'search' 
+                  ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
+                  : 'text-slate-600 hover:text-slate-900 border border-transparent'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              Search Opportunities
+            </button>
+            <button
+              onClick={() => setActiveTab('emails')}
+              className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'emails' 
+                  ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
+                  : 'text-slate-600 hover:text-slate-900 border border-transparent'
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              Email Directory
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'search' ? (
+          <>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="max-w-2xl mx-auto mb-16 relative z-10"
+            >
+              <form onSubmit={handleSearch} className="relative shadow-xl shadow-blue-900/5 rounded-2xl overflow-hidden bg-white border border-gray-200/80 p-2 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
             <div className="flex items-center px-4 py-2">
               <Search className="w-5 h-5 text-gray-400 shrink-0" />
               <input
@@ -327,7 +395,26 @@ export default function App() {
               </motion.div>
             ) : null}
           </AnimatePresence>
-        </div>
+          </div>
+          </>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-8 mb-8 text-center max-w-3xl mx-auto shadow-sm">
+               <h3 className="text-2xl font-bold text-slate-800 font-display flex items-center justify-center gap-3">
+                 <div className="bg-blue-100 p-2 rounded-xl">
+                   <Mail className="w-6 h-6 text-blue-600" />
+                 </div>
+                 Direct Application Emails
+               </h3>
+               <p className="text-slate-600 mt-4 text-lg">A provided list of direct contact emails for nursing apprenticeship applications.</p>
+            </div>
+            <EmailTable emails={customEmails} />
+          </motion.div>
+        )}
       </main>
     </div>
   );

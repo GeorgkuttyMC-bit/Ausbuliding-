@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
 import { Hospital } from '../types';
 import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe, Check } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useApplicationState } from './useApplicationState';
 
 interface HospitalCardProps {
   hospital: Hospital;
@@ -9,21 +9,9 @@ interface HospitalCardProps {
 }
 
 export function HospitalCard({ hospital, index }: HospitalCardProps) {
-  const hospitalKey = `applied-${hospital.hospitalName}-${hospital.location}`.replace(/\s+/g, '-').toLowerCase();
-  const [isApplied, setIsApplied] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(hospitalKey);
-    if (stored) {
-      setIsApplied(stored === 'true');
-    }
-  }, [hospitalKey]);
-
-  const toggleApplied = () => {
-    const newValue = !isApplied;
-    setIsApplied(newValue);
-    localStorage.setItem(hospitalKey, String(newValue));
-  };
+  const hospitalKey = `applied-${hospital.hospitalName}-${hospital.location}`.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
+  
+  const { isApplied, toggleApplied } = useApplicationState(hospitalKey, hospital.hospitalName, hospital.location);
 
   return (
     <motion.div
