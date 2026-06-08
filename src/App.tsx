@@ -48,10 +48,10 @@ export default function App() {
           body: JSON.stringify({ query, page: 1 }),
         });
         
-        if (response.status === 429) {
-          // Stop polling if we hit rate limits
+        if (response.status === 429 || response.status === 503) {
+          // Stop polling if we hit rate limits or high demand
           clearInterval(interval);
-          setError('API Rate limit reached. Background polling disabled temporarily.');
+          setError(response.status === 429 ? 'API Rate limit reached. Background polling disabled temporarily.' : 'Model high demand. Background polling disabled temporarily.');
           return;
         }
         
@@ -127,6 +127,9 @@ export default function App() {
       if (!response.ok) {
         if (response.status === 429) {
           throw new Error('API Rate limit exceeded. Please wait a moment before trying again.');
+        }
+        if (response.status === 503) {
+          throw new Error('The AI model is currently experiencing high demand. Please try again in a few moments.');
         }
         const errorText = await response.text();
         let errorMessage = 'Failed to fetch data';

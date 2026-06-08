@@ -159,8 +159,11 @@ async function startServer() {
       res.json({ results, ausbildungResults, arbeitsagenturResults });
     } catch (error: any) {
       console.error('Error in /api/search:', error);
-      const statusValue = error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota') ? 429 : 500;
-      res.status(statusValue).json({ error: error?.message || 'Failed to search for nursing openings' });
+      const is429 = error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota');
+      const is503 = error?.status === 503 || error?.status === 'UNAVAILABLE' || error?.code === 503 || error?.message?.includes('503');
+      const statusValue = is429 ? 429 : (is503 ? 503 : 500);
+      const errorMsg = is503 ? 'The AI model is currently experiencing high demand. Please try again in a few moments.' : (error?.message || 'Failed to search for nursing openings');
+      res.status(statusValue).json({ error: errorMsg });
     }
   });
 
