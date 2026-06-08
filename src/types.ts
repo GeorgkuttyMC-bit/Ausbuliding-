@@ -9,6 +9,7 @@ export interface Hospital {
   postedDaysAgo?: number;
   isNew?: boolean;
   isEmailVerified?: boolean | null;
+  duplicateSources?: string[];
 }
 
 export interface SearchResponse {

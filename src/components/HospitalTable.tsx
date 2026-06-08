@@ -49,11 +49,16 @@ function HospitalTableRow({ hospital, index }: { hospital: Hospital, index: numb
       >
         <td className="py-4 px-6 align-top">
           <div className="flex flex-col gap-1">
-            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <h4 className="text-sm font-bold text-slate-900 flex items-center flex-wrap gap-2">
               {hospital.hospitalName}
               {hospital.isNew && (
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                   New
+                </span>
+              )}
+              {hospital.duplicateSources && hospital.duplicateSources.length > 0 && (
+                <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide border border-slate-200" title={`Also found in: ${hospital.duplicateSources.join(', ')}`}>
+                  Also in {hospital.duplicateSources.join(' & ')}
                 </span>
               )}
             </h4>

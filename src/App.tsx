@@ -8,23 +8,27 @@ import { Hospital } from './types';
 import { HospitalCard } from './components/HospitalCard';
 import { HospitalTable } from './components/HospitalTable';
 import { EmailTable } from './components/EmailTable';
+import { AggregatedEmailTable } from './components/AggregatedEmailTable';
 import { customEmails } from './data/emails';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from './components/AuthProvider';
 import { useApplicationCount } from './components/useApplicationCount';
 
 export default function App() {
-  const { user, loading: authLoading, loginWithGoogle, logout } = useAuth();
+  const { user, loading: authLoading, loginWithName, logout } = useAuth();
   const applicationCount = useApplicationCount();
-  const [activeTab, setActiveTab] = useState<'search' | 'emails'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'emails' | 'onlyEmails'>('search');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [results, setResults] = useState<Hospital[]>([]);
   const [ausbildungResults, setAusbildungResults] = useState<Hospital[]>([]);
+  const [arbeitsagenturResults, setArbeitsagenturResults] = useState<Hospital[]>([]);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginName, setLoginName] = useState('');
 
   // Initial load to show something immediately
   useEffect(() => {
@@ -55,6 +59,7 @@ export default function App() {
           const data = await JSON.parse(await response.text());
           const fetchedResults: Hospital[] = data.results || [];
           const fetchedAusbildungResults: Hospital[] = data.ausbildungResults || [];
+          const fetchedArbeitsagenturResults: Hospital[] = data.arbeitsagenturResults || [];
           
           setResults(prevResults => {
             const newResultsList = [...prevResults];
@@ -81,6 +86,19 @@ export default function App() {
             const newResultsList = [...prevResults];
             let hasNew = false;
             fetchedAusbildungResults.forEach(newHospital => {
+              const exists = prevResults.some(existing => existing.hospitalName.toLowerCase() === newHospital.hospitalName.toLowerCase());
+              if (!exists) {
+                newResultsList.push({ ...newHospital, isNew: true });
+                hasNew = true;
+              }
+            });
+            return hasNew ? newResultsList : prevResults;
+          });
+
+          setArbeitsagenturResults(prevResults => {
+            const newResultsList = [...prevResults];
+            let hasNew = false;
+            fetchedArbeitsagenturResults.forEach(newHospital => {
               const exists = prevResults.some(existing => existing.hospitalName.toLowerCase() === newHospital.hospitalName.toLowerCase());
               if (!exists) {
                 newResultsList.push({ ...newHospital, isNew: true });
@@ -124,13 +142,33 @@ export default function App() {
       const data = await JSON.parse(await response.text());
       const newResults = data.results || [];
       const newAusbildungResults = data.ausbildungResults || [];
+      const newArbeitsagenturResults = data.arbeitsagenturResults || [];
+      
+      const checkDuplicates = (targetList: Hospital[], generalList: Hospital[], ausbildungList: Hospital[]) => {
+        return targetList.map(h => {
+          const namesMatch = (h1: Hospital, h2: Hospital) => h1.hospitalName.toLowerCase() === h2.hospitalName.toLowerCase();
+          const inGeneral = generalList.some(gh => namesMatch(h, gh));
+          const inAusbildung = ausbildungList.some(ah => namesMatch(h, ah));
+          
+          const dupSources = [];
+          if (inGeneral) dupSources.push('General');
+          if (inAusbildung) dupSources.push('Ausbildung');
+          
+          return dupSources.length > 0 ? { ...h, duplicateSources: dupSources } : h;
+        });
+      };
       
       if (append) {
         setResults(prev => [...prev, ...newResults]);
         setAusbildungResults(prev => [...prev, ...newAusbildungResults]);
+        setArbeitsagenturResults(prev => [
+          ...prev, 
+          ...checkDuplicates(newArbeitsagenturResults, [...prev, ...newResults], [...ausbildungResults, ...newAusbildungResults])
+        ]);
       } else {
         setResults(newResults);
         setAusbildungResults(newAusbildungResults);
+        setArbeitsagenturResults(checkDuplicates(newArbeitsagenturResults, newResults, newAusbildungResults));
       }
       
       setPage(targetPage);
@@ -189,7 +227,7 @@ export default function App() {
                 </div>
               ) : !authLoading && !user ? (
                 <button
-                  onClick={loginWithGoogle}
+                  onClick={() => setShowLoginModal(true)}
                   className="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors px-4 py-2 rounded-full shadow-sm"
                 >
                   Log In
@@ -249,6 +287,17 @@ export default function App() {
               <Mail className="w-4 h-4" />
               Email Directory
             </button>
+            <button
+              onClick={() => setActiveTab('onlyEmails')}
+              className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'onlyEmails' 
+                  ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
+                  : 'text-slate-600 hover:text-slate-900 border border-transparent'
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              Only Email ID
+            </button>
           </div>
         </div>
 
@@ -290,7 +339,7 @@ export default function App() {
 
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200/50">
             <h3 className="text-lg font-medium text-slate-700">
-              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length + ausbildungResults.length}</span>}
+              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length + ausbildungResults.length + arbeitsagenturResults.length}</span>}
               {searched && !loading && " Total Opportunities Found"}
               {loading && "Searching for matching institutions..."}
               {!searched && !loading && "Enter a location to discover opportunities."}
@@ -309,8 +358,8 @@ export default function App() {
                 <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
                 <p>Querying hospital databases and Ausbildung.de...</p>
               </motion.div>
-            ) : results.length > 0 || ausbildungResults.length > 0 ? (
-              <motion.div key="results" className="grid grid-cols-1 lg:grid-cols-2 gap-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            ) : results.length > 0 || ausbildungResults.length > 0 || arbeitsagenturResults.length > 0 ? (
+              <motion.div key="results" className="grid grid-cols-1 lg:grid-cols-3 gap-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {/* Left Column: General Openings */}
                 <div className="space-y-10">
                   <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
@@ -340,7 +389,7 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* Right Column: Ausbildung.de Openings */}
+                {/* Middle Column: Ausbildung.de Openings */}
                 <div className="space-y-10">
                   <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
                     <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
@@ -369,8 +418,38 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+
+                {/* Right Column: Arbeitsagentur.de Openings */}
+                <div className="space-y-10">
+                  <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
+                    <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
+                      <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Source</span>
+                      Arbeitsagentur.de
+                    </h3>
+                  </div>
+                  {Object.entries(
+                    arbeitsagenturResults.reduce((acc, hospital) => {
+                      const city = hospital.location.split(',')[0].trim();
+                      if (!acc[city]) acc[city] = [];
+                      acc[city].push(hospital);
+                      return acc;
+                    }, {} as Record<string, Hospital[]>)
+                  )
+                  .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
+                  .map(([city, cityHospitals]: [string, Hospital[]]) => (
+                    <div key={`arb-${city}`} className="space-y-6">
+                      <h4 className="text-2xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
+                        <div className="bg-orange-50 p-2 rounded-lg">
+                          <MapPin className="w-5 h-5 text-orange-600" />
+                        </div>
+                        {city}
+                      </h4>
+                        <HospitalTable hospitals={cityHospitals} />
+                    </div>
+                  ))}
+                </div>
                 
-                <div className="col-span-1 lg:col-span-2 pt-10 text-center pb-8">
+                <div className="col-span-1 lg:col-span-3 pt-10 text-center pb-8">
                   <button
                     onClick={loadMore}
                     disabled={loadingMore}
@@ -397,7 +476,7 @@ export default function App() {
           </AnimatePresence>
           </div>
           </>
-        ) : (
+        ) : activeTab === 'emails' ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -414,7 +493,91 @@ export default function App() {
             </div>
             <EmailTable emails={customEmails} />
           </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-8 mb-8 text-center max-w-3xl mx-auto shadow-sm">
+               <h3 className="text-2xl font-bold text-slate-800 font-display flex items-center justify-center gap-3">
+                 <div className="bg-blue-100 p-2 rounded-xl">
+                   <Mail className="w-6 h-6 text-blue-600" />
+                 </div>
+                 Aggregated Email IDs
+               </h3>
+               <p className="text-slate-600 mt-4 text-lg">A unified list of all available email IDs found in your search results, color-coded by source.</p>
+            </div>
+            <AggregatedEmailTable 
+              results={results} 
+              ausbildungResults={ausbildungResults} 
+              arbeitsagenturResults={arbeitsagenturResults} 
+            />
+          </motion.div>
         )}
+
+        <AnimatePresence>
+          {showLoginModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setShowLoginModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200"
+              >
+                <div className="flex items-center justify-center mb-6">
+                  <div className="bg-blue-100 p-3 rounded-full text-blue-600">
+                    <User className="w-8 h-8" />
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-center text-slate-900 mb-2 font-display">Welcome Back</h3>
+                <p className="text-center text-slate-500 mb-6">Enter your name to track your applications</p>
+                
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (loginName.trim()) {
+                    await loginWithName(loginName.trim());
+                    setShowLoginModal(false);
+                    setLoginName('');
+                  }
+                }}>
+                  <input
+                    type="text"
+                    value={loginName}
+                    onChange={(e) => setLoginName(e.target.value)}
+                    placeholder="E.g. Sarah Schmidt"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all mb-4"
+                    autoFocus
+                    required
+                  />
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginModal(false)}
+                      className="flex-1 px-4 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!loginName.trim()}
+                      className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Login
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );
