@@ -7,6 +7,7 @@ import { Search, Stethoscope, Loader2, MapPin, Mail, User, LogOut, FileCheck } f
 import { Hospital } from './types';
 import { HospitalCard } from './components/HospitalCard';
 import { HospitalTable } from './components/HospitalTable';
+import { PaginatedHospitalList } from './components/PaginatedHospitalList';
 import { EmailTable } from './components/EmailTable';
 import { AggregatedEmailTable } from './components/AggregatedEmailTable';
 import { customEmails } from './data/emails';
@@ -17,7 +18,7 @@ import { useApplicationCount } from './components/useApplicationCount';
 export default function App() {
   const { user, loading: authLoading, loginWithName, logout } = useAuth();
   const applicationCount = useApplicationCount();
-  const [activeTab, setActiveTab] = useState<'search' | 'emails' | 'onlyEmails'>('search');
+  const [activeTab, setActiveTab] = useState<'general' | 'ausbildung' | 'arbeitsagentur' | 'emails' | 'onlyEmails'>('general');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -267,21 +268,44 @@ export default function App() {
         </div>
 
         <div className="flex justify-center mb-10 relative z-10">
-          <div className="inline-flex bg-slate-200/50 p-1.5 rounded-xl backdrop-blur-sm border border-slate-200">
+          <div className="inline-flex flex-wrap justify-center gap-2 bg-slate-200/50 p-2 rounded-2xl backdrop-blur-sm border border-slate-200 max-w-full">
             <button
-              onClick={() => setActiveTab('search')}
-              className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                activeTab === 'search' 
+              onClick={() => setActiveTab('general')}
+              className={`px-4 xl:px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'general' 
                   ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
                   : 'text-slate-600 hover:text-slate-900 border border-transparent'
               }`}
             >
               <Search className="w-4 h-4" />
-              Search Opportunities
+              General Openings
             </button>
             <button
+              onClick={() => setActiveTab('ausbildung')}
+              className={`px-4 xl:px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'ausbildung' 
+                  ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
+                  : 'text-slate-600 hover:text-slate-900 border border-transparent'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              Ausbildung.de
+            </button>
+            <button
+              onClick={() => setActiveTab('arbeitsagentur')}
+              className={`px-4 xl:px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'arbeitsagentur' 
+                  ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
+                  : 'text-slate-600 hover:text-slate-900 border border-transparent'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              Arbeitsagentur.de
+            </button>
+            <div className="w-px bg-slate-300 hidden md:block"></div>
+            <button
               onClick={() => setActiveTab('emails')}
-              className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+              className={`px-4 xl:px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
                 activeTab === 'emails' 
                   ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
                   : 'text-slate-600 hover:text-slate-900 border border-transparent'
@@ -292,7 +316,7 @@ export default function App() {
             </button>
             <button
               onClick={() => setActiveTab('onlyEmails')}
-              className={`px-6 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+              className={`px-4 xl:px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
                 activeTab === 'onlyEmails' 
                   ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
                   : 'text-slate-600 hover:text-slate-900 border border-transparent'
@@ -304,7 +328,7 @@ export default function App() {
           </div>
         </div>
 
-        {activeTab === 'search' ? (
+        {activeTab === 'general' || activeTab === 'ausbildung' || activeTab === 'arbeitsagentur' ? (
           <>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -362,97 +386,38 @@ export default function App() {
                 <p>Querying hospital databases and Ausbildung.de...</p>
               </motion.div>
             ) : results.length > 0 || ausbildungResults.length > 0 || arbeitsagenturResults.length > 0 ? (
-              <motion.div key="results" className="grid grid-cols-1 lg:grid-cols-3 gap-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {/* Left Column: General Openings */}
-                <div className="space-y-10">
-                  <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
-                    <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
-                       General Openings
-                    </h3>
-                  </div>
-                  {Object.entries(
-                    results.reduce((acc, hospital) => {
-                      const city = hospital.location.split(',')[0].trim();
-                      if (!acc[city]) acc[city] = [];
-                      acc[city].push(hospital);
-                      return acc;
-                    }, {} as Record<string, Hospital[]>)
-                  )
-                  .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
-                  .map(([city, cityHospitals]: [string, Hospital[]]) => (
-                    <div key={`general-${city}`} className="space-y-6">
-                      <h4 className="text-2xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
-                        <div className="bg-indigo-50 p-2 rounded-lg">
-                          <MapPin className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        {city}
-                      </h4>
-                        <HospitalTable hospitals={cityHospitals} />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Middle Column: Ausbildung.de Openings */}
-                <div className="space-y-10">
-                  <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
-                    <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
-                      <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Source</span>
-                      Data from Ausbildung.de
-                    </h3>
-                  </div>
-                  {Object.entries(
-                    ausbildungResults.reduce((acc, hospital) => {
-                      const city = hospital.location.split(',')[0].trim();
-                      if (!acc[city]) acc[city] = [];
-                      acc[city].push(hospital);
-                      return acc;
-                    }, {} as Record<string, Hospital[]>)
-                  )
-                  .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
-                  .map(([city, cityHospitals]: [string, Hospital[]]) => (
-                    <div key={`aus-${city}`} className="space-y-6">
-                      <h4 className="text-2xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
-                        <div className="bg-emerald-50 p-2 rounded-lg">
-                          <MapPin className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        {city}
-                      </h4>
-                        <HospitalTable hospitals={cityHospitals} />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Right Column: Arbeitsagentur.de Openings */}
-                <div className="space-y-10">
-                  <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
-                    <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
-                      <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Source</span>
-                      Arbeitsagentur.de
-                    </h3>
-                  </div>
-                  {Object.entries(
-                    arbeitsagenturResults.reduce((acc, hospital) => {
-                      const city = hospital.location.split(',')[0].trim();
-                      if (!acc[city]) acc[city] = [];
-                      acc[city].push(hospital);
-                      return acc;
-                    }, {} as Record<string, Hospital[]>)
-                  )
-                  .sort(([cityA], [cityB]) => cityA.localeCompare(cityB))
-                  .map(([city, cityHospitals]: [string, Hospital[]]) => (
-                    <div key={`arb-${city}`} className="space-y-6">
-                      <h4 className="text-2xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
-                        <div className="bg-orange-50 p-2 rounded-lg">
-                          <MapPin className="w-5 h-5 text-orange-600" />
-                        </div>
-                        {city}
-                      </h4>
-                        <HospitalTable hospitals={cityHospitals} />
-                    </div>
-                  ))}
-                </div>
+              <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 
-                <div className="col-span-1 lg:col-span-3 pt-10 text-center pb-8">
+                {activeTab === 'general' && (
+                  <PaginatedHospitalList 
+                    hospitals={results}
+                    sourceName="General Openings"
+                    sourceIconColorClass="text-indigo-600"
+                    sourceBgColorClass="bg-indigo-50"
+                  />
+                )}
+
+                {activeTab === 'ausbildung' && (
+                  <PaginatedHospitalList 
+                    hospitals={ausbildungResults}
+                    sourceName="Data from Ausbildung.de"
+                    sourceIconColorClass="text-emerald-600"
+                    sourceBgColorClass="bg-emerald-50"
+                    badgeContent={<span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Source</span>}
+                  />
+                )}
+
+                {activeTab === 'arbeitsagentur' && (
+                  <PaginatedHospitalList 
+                    hospitals={arbeitsagenturResults}
+                    sourceName="Arbeitsagentur.de"
+                    sourceIconColorClass="text-orange-600"
+                    sourceBgColorClass="bg-orange-50"
+                    badgeContent={<span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Source</span>}
+                  />
+                )}
+                
+                <div className="pt-10 text-center pb-8">
                   <button
                     onClick={loadMore}
                     disabled={loadingMore}
