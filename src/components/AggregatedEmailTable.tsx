@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Mail, Check, AlertCircle, Copy, CheckCircle2, Download, Send, X, Paperclip, Loader2 } from 'lucide-react';
+import { Mail, Check, AlertCircle, Copy, CheckCircle2, Download } from 'lucide-react';
 import { Hospital } from '../types';
-import { useAuth } from './AuthProvider';
 
 interface EmailEntry {
   hospitalName: string;
@@ -10,21 +9,6 @@ interface EmailEntry {
   isEmailVerified?: boolean | null;
   postedDaysAgo?: number;
 }
-
-const EMAIL_SUBJECT = "Bewerbung um eine Ausbildung Pflegefachmann/-frau über Ausbildung.de";
-const EMAIL_BODY = `Sehr geehrte Damen und Herren,
-
-hiermit übersende ich Ihnen meine Bewerbung um einen Ausbildungsplatz als Pflegefachkraft in Ihrer Einrichtung.
-Im Anhang finden Sie mein Motivationsschreiben, meinen Lebenslauf sowie alle relevanten Zeugnisse und Nachweise.
-
-Ich freue mich sehr über die Möglichkeit, meine Ausbildung in Ihrer Einrichtung zu beginnen, und würde mich über eine Einladung zu einem Vorstellungsgespräch sehr freuen.
-
-Für weitere Fragen stehe ich Ihnen jederzeit gerne zur Verfügung.
-
-Vielen Dank für Ihre Zeit und Ihre Berücksichtigung.
-
-Mit freundlichen Grüßen
-Bincy Abraham`;
 
 export function AggregatedEmailTable({ results, ausbildungResults, arbeitsagenturResults }: { results: Hospital[], ausbildungResults: Hospital[], arbeitsagenturResults: Hospital[] }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -186,7 +170,19 @@ export function AggregatedEmailTable({ results, ausbildungResults, arbeitsagentu
 
 function EmailRow({ entry }: { entry: EmailEntry }) {
   const [copied, setCopied] = useState(false);
-  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [applied, setApplied] = useState(() => {
+    return localStorage.getItem(`applied-${entry.mailId}`) === 'true';
+  });
+
+  const toggleApplied = () => {
+    const newState = !applied;
+    setApplied(newState);
+    if (newState) {
+      localStorage.setItem(`applied-${entry.mailId}`, 'true');
+    } else {
+      localStorage.removeItem(`applied-${entry.mailId}`);
+    }
+  };
 
   const getSourceColor = (source: string) => {
     switch (source) {
@@ -213,7 +209,6 @@ function EmailRow({ entry }: { entry: EmailEntry }) {
   };
 
   return (
-    <>
     <tr className={`transition-colors ${getSourceColor(entry.source)}`}>
       <td className="px-4 py-3 font-medium text-slate-900">{entry.hospitalName}</td>
       <td className="px-4 py-3">
@@ -249,241 +244,16 @@ function EmailRow({ entry }: { entry: EmailEntry }) {
       </td>
       <td className="px-4 py-3 text-right">
         <button
-          onClick={() => setShowApplyModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-md font-medium text-xs hover:bg-slate-800 transition-colors shadow-sm"
+          onClick={toggleApplied}
+          className={`inline-flex items-center justify-center min-w-[100px] gap-1.5 px-3 py-1.5 rounded-md font-medium text-xs transition-colors shadow-sm border ${
+            applied 
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+              : 'bg-slate-900 text-white border-transparent hover:bg-slate-800'
+          }`}
         >
-          <Send className="w-3.5 h-3.5" /> Apply
+          {applied ? <><CheckCircle2 className="w-3.5 h-3.5" /> Applied</> : 'Mark Applied'}
         </button>
       </td>
     </tr>
-    {showApplyModal && (
-      <ApplicationModal 
-        entry={entry} 
-        onClose={() => setShowApplyModal(false)} 
-      />
-    )}
-    </>
-  );
-}
-
-function ApplicationModal({ entry, onClose }: { entry: EmailEntry, onClose: () => void }) {
-  const { user, googleSignIn, getAccessToken } = useAuth();
-  const [subject, setSubject] = useState(EMAIL_SUBJECT);
-  const [body, setBody] = useState(EMAIL_BODY);
-  const [files, setFiles] = useState<File[]>([]);
-  const [sending, setSending] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
-
-  const renderAuthUI = () => (
-    <div className="p-8 text-center bg-white rounded-2xl shadow-xl max-w-md w-full border border-slate-200">
-       <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-         <Mail className="w-8 h-8 text-blue-600" />
-       </div>
-       <h2 className="text-xl font-bold text-slate-900 mb-2">Connect Gmail</h2>
-       <p className="text-slate-600 mb-6 text-sm">To send emails directly from your account, please sign in with Google.</p>
-       
-       <button onClick={async () => {
-         try {
-           setError('');
-           await googleSignIn();
-         } catch (err: any) {
-           setError(err.message || 'Failed to sign in');
-         }
-       }} className="gsi-material-button w-full mb-4">
-          <div className="gsi-material-button-state"></div>
-          <div className="gsi-material-button-content-wrapper p-2 flex items-center gap-3 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors">
-            <div className="gsi-material-button-icon bg-white p-1 rounded-sm">
-              <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-5 h-5">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                <path fill="none" d="M0 0h48v48H0z"></path>
-              </svg>
-            </div>
-            <span className="gsi-material-button-contents font-medium text-slate-700">Sign in with Google</span>
-          </div>
-        </button>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button onClick={onClose} className="text-slate-500 hover:text-slate-700 text-sm">Cancel</button>
-    </div>
-  );
-
-  const u8ToBase64 = (u8: Uint8Array) => {
-    let binary = '';
-    const len = u8.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(u8[i]);
-    }
-    return window.btoa(binary);
-  };
-
-  const handleSend = async () => {
-    const token = getAccessToken();
-    if (!token) return;
-
-    setSending(true);
-    setError('');
-    try {
-      const boundary = "foo_bar_baz_boundary";
-      const utf8Subject = `=?utf-8?B?${btoa(encodeURIComponent(subject).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1 as any)))}?=`;
-
-      const parts = [];
-      parts.push(`To: ${entry.mailId}`);
-      parts.push(`Cc: bincyabraham2050@gmail.com`); // CC to self as requested
-      parts.push(`Subject: ${utf8Subject}`);
-      parts.push('MIME-Version: 1.0');
-      parts.push(`Content-Type: multipart/mixed; boundary="${boundary}"\r\n`);
-      parts.push(`--${boundary}`);
-      parts.push('Content-Type: text/plain; charset="utf-8"');
-      parts.push('Content-Transfer-Encoding: 7bit\r\n');
-      parts.push(body + '\r\n');
-
-      for (const file of files) {
-        const base64Data = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve((reader.result as string).split(',')[1]);
-          reader.readAsDataURL(file);
-        });
-        parts.push(`--${boundary}`);
-        parts.push(`Content-Type: ${file.type || 'application/octet-stream'}; name="${file.name}"`);
-        parts.push(`Content-Disposition: attachment; filename="${file.name}"`);
-        parts.push(`Content-Transfer-Encoding: base64\r\n`);
-        parts.push(base64Data + '\r\n');
-      }
-
-      parts.push(`--${boundary}--`);
-
-      const rawMessage = parts.join('\r\n');
-      
-      const encoder = new TextEncoder();
-      const buffer = encoder.encode(rawMessage);
-      
-      const chunk = 32768;
-      let binaryStr = "";
-      for (let i = 0; i < buffer.length; i += chunk) {
-        binaryStr += String.fromCharCode.apply(null, Array.from(buffer.subarray(i, i + chunk)));
-      }
-      
-      const base64 = btoa(binaryStr);
-      const base64url = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-      const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ raw: base64url }),
-      });
-      
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error?.message || 'Failed to send email');
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Error sending email');
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-      {(!user || user.isAnonymous || !getAccessToken()) ? renderAuthUI() : (
-        <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full flex flex-col max-h-[90vh]">
-          <div className="flex items-center justify-between p-6 border-b border-slate-200">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Send Application</h2>
-              <p className="text-slate-500 text-sm mt-1">To: <span className="font-medium text-slate-700">{entry.hospitalName}</span> ({entry.mailId})</p>
-            </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-              <X className="w-5 h-5 text-slate-500" />
-            </button>
-          </div>
-          
-          <div className="p-6 overflow-y-auto space-y-4">
-            {success ? (
-              <div className="py-12 text-center">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-8 h-8 text-emerald-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Email Sent!</h3>
-                <p className="text-slate-500">Your application has been successfully delivered to {entry.hospitalName}.</p>
-              </div>
-            ) : (
-              <>
-                {error && <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm">{error}</div>}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
-                  <input 
-                    type="text" 
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
-                  <textarea 
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    rows={12}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-sans text-sm resize-y"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Attachments</label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors relative cursor-pointer">
-                    <input 
-                      type="file" 
-                      multiple 
-                      onChange={(e) => setFiles(Array.from(e.target.files || []))}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <div className="flex flex-col items-center gap-2">
-                       <Paperclip className="w-6 h-6 text-slate-400" />
-                       <span className="text-sm text-slate-600 font-medium">Click to upload your CV, Cover Letter etc.</span>
-                    </div>
-                  </div>
-                  {files.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                      {files.map((f, i) => (
-                        <div key={i} className="flex justify-between items-center bg-slate-50 p-2 border border-slate-200 rounded-md text-sm">
-                          <span className="text-slate-700 font-medium truncate max-w-[80%]">{f.name}</span>
-                          <span className="text-slate-400 text-xs text-right whitespace-nowrap">{(f.size / 1024 / 1024).toFixed(2)} MB</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-          
-          {!success && (
-            <div className="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
-              <button onClick={onClose} disabled={sending} className="px-4 py-2 text-slate-700 font-medium hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50">
-                Cancel
-              </button>
-              <button 
-                onClick={handleSend} 
-                disabled={sending}
-                className="px-6 py-2 bg-blue-600 text-white font-medium hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
-              >
-                {sending ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</> : <><Send className="w-4 h-4" /> Send Email</>}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
   );
 }

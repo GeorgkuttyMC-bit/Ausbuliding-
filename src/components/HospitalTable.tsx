@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Hospital } from '../types';
-import { Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe, Check, ChevronDown, ChevronUp, Linkedin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApplicationState } from './useApplicationState';
 
@@ -101,6 +101,10 @@ function HospitalTableRow({ hospital, index }: { hospital: Hospital, index: numb
                 <span className="truncate">Website</span>
               </a>
             )}
+            <a href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(hospital.hospitalName)}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600 truncate max-w-[150px]">
+              <Linkedin className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Employees on LinkedIn</span>
+            </a>
           </div>
         </td>
 

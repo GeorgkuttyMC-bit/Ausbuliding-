@@ -1,5 +1,5 @@
 import { Hospital } from '../types';
-import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe, Check } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, History, GraduationCap, CheckCircle2, AlertCircle, Clock, Globe, Check, Linkedin } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useApplicationState } from './useApplicationState';
 
@@ -102,6 +102,17 @@ export function HospitalCard({ hospital, index }: HospitalCardProps) {
               <span className="text-sm font-semibold text-slate-700 truncate flex-1">{hospital.website}</span>
             </a>
           )}
+          <a 
+            href={`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(hospital.hospitalName)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-3 bg-slate-50 border border-slate-100 px-4 py-3 rounded-xl hover:bg-white hover:border-slate-300 hover:shadow-sm transition-all"
+          >
+            <div className="bg-white p-1.5 rounded-lg shadow-sm group-hover:text-blue-600 transition-colors">
+              <Linkedin className="w-4 h-4 text-slate-500 group-hover:text-blue-600" />
+            </div>
+            <span className="text-sm font-semibold text-slate-700 truncate flex-1">Employees on LinkedIn</span>
+          </a>
           
           <button 
             onClick={toggleApplied}
