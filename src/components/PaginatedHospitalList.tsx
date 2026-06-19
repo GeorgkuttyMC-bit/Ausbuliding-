@@ -18,15 +18,6 @@ export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorCl
   const totalPages = Math.ceil(hospitals.length / itemsPerPage);
   const paginatedHospitals = hospitals.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const groupedByCity = paginatedHospitals.reduce((acc, hospital) => {
-    const city = hospital.location.split(',')[0].trim();
-    if (!acc[city]) acc[city] = [];
-    acc[city].push(hospital);
-    return acc;
-  }, {} as Record<string, Hospital[]>);
-
-  const sortedCities = Object.entries(groupedByCity).sort(([cityA], [cityB]) => cityA.localeCompare(cityB));
-
   if (hospitals.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500 bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl">
@@ -37,24 +28,16 @@ export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorCl
 
   return (
     <div className="space-y-10 max-w-4xl mx-auto">
-      <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10">
+      <div className="bg-white/60 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 pb-2 sticky top-20 z-10 hidden">
         <h3 className="text-xl font-bold text-slate-800 font-display flex items-center gap-2">
           {badgeContent}
           {sourceName}
         </h3>
       </div>
       
-      {sortedCities.map(([city, cityHospitals]) => (
-        <div key={`${sourceName}-${city}`} className="space-y-6">
-          <h4 className="text-2xl font-bold text-slate-900 pb-2 flex items-center gap-3 font-display">
-            <div className={`${sourceBgColorClass} p-2 rounded-lg`}>
-              <MapPin className={`w-5 h-5 ${sourceIconColorClass}`} />
-            </div>
-            {city}
-          </h4>
-          <HospitalTable hospitals={cityHospitals} />
-        </div>
-      ))}
+      <div className="space-y-6">
+        <HospitalTable hospitals={paginatedHospitals} />
+      </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3 sm:px-6 rounded-xl shadow-sm mt-8">
