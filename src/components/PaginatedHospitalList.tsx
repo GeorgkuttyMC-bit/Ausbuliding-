@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Hospital } from '../types';
-import { MapPin } from 'lucide-react';
-import { HospitalTable } from './HospitalTable';
+import { useState } from "react";
+import { Hospital } from "../types";
+import { MapPin } from "lucide-react";
+import { HospitalTable } from "./HospitalTable";
 
 interface PaginatedHospitalListProps {
   hospitals: Hospital[];
@@ -11,12 +11,21 @@ interface PaginatedHospitalListProps {
   badgeContent?: React.ReactNode;
 }
 
-export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorClass, sourceBgColorClass, badgeContent }: PaginatedHospitalListProps) {
+export function PaginatedHospitalList({
+  hospitals,
+  sourceName,
+  sourceIconColorClass,
+  sourceBgColorClass,
+  badgeContent,
+}: PaginatedHospitalListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
   const totalPages = Math.ceil(hospitals.length / itemsPerPage);
-  const paginatedHospitals = hospitals.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedHospitals = hospitals.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   if (hospitals.length === 0) {
     return (
@@ -34,7 +43,7 @@ export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorCl
           {sourceName}
         </h3>
       </div>
-      
+
       <div className="space-y-6">
         <HospitalTable hospitals={paginatedHospitals} />
       </div>
@@ -43,14 +52,16 @@ export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorCl
         <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3 sm:px-6 rounded-xl shadow-sm mt-8">
           <div className="flex flex-1 justify-between sm:hidden">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="relative inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage === totalPages}
               className="relative ml-3 inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -60,26 +71,52 @@ export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorCl
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-slate-700">
-                Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
-                <span className="font-medium">{Math.min(currentPage * itemsPerPage, hospitals.length)}</span> of{' '}
-                <span className="font-medium">{hospitals.length}</span> results
+                Showing{" "}
+                <span className="font-medium">
+                  {(currentPage - 1) * itemsPerPage + 1}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium">
+                  {Math.min(currentPage * itemsPerPage, hospitals.length)}
+                </span>{" "}
+                of <span className="font-medium">{hospitals.length}</span>{" "}
+                results
               </p>
             </div>
             <div>
-              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+              <nav
+                className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                aria-label="Pagination"
+              >
                 <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">Previous</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
                 {/* Simple page numbers limits to 5 for layout */}
                 {[...Array(Math.min(totalPages, 5))].map((_, idx) => {
-                  const pageNumber = totalPages <= 5 ? idx + 1 : (currentPage > 3 ? currentPage - 2 + idx : idx + 1);
+                  const pageNumber =
+                    totalPages <= 5
+                      ? idx + 1
+                      : currentPage > 3
+                        ? currentPage - 2 + idx
+                        : idx + 1;
                   if (pageNumber > totalPages) return null;
                   return (
                     <button
@@ -87,8 +124,8 @@ export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorCl
                       onClick={() => setCurrentPage(pageNumber)}
                       className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                         currentPage === pageNumber
-                          ? 'z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                          : 'text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0'
+                          ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                          : "text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0"
                       }`}
                     >
                       {pageNumber}
@@ -96,13 +133,24 @@ export function PaginatedHospitalList({ hospitals, sourceName, sourceIconColorCl
                   );
                 })}
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages}
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="sr-only">Next</span>
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </button>
               </nav>
