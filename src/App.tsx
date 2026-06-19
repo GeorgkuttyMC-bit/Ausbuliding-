@@ -395,8 +395,16 @@ export default function App() {
 
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200/50">
             <h3 className="text-lg font-medium text-slate-700">
-              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length + ausbildungResults.length + arbeitsagenturResults.length + radiologyResults.length}</span>}
-              {searched && !loading && " Total Opportunities Found"}
+              {searched && !loading && (
+                <span className="text-slate-900 font-semibold">
+                  {activeTab === 'general' ? results.length :
+                   activeTab === 'ausbildung' ? ausbildungResults.length :
+                   activeTab === 'arbeitsagentur' ? arbeitsagenturResults.length :
+                   activeTab === 'radiology' ? radiologyResults.length :
+                   results.length + ausbildungResults.length + arbeitsagenturResults.length + radiologyResults.length}
+                </span>
+              )}
+              {searched && !loading && " Opportunities Found in this Category"}
               {loading && "Searching for matching institutions..."}
               {!searched && !loading && "Enter a location to discover opportunities."}
             </h3>
@@ -456,15 +464,20 @@ export default function App() {
                   />
                 )}
                 
-                <div className="pt-10 text-center pb-8">
-                  <button
-                    onClick={loadMore}
-                    disabled={loadingMore}
-                    className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 px-8 py-3.5 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center gap-2 mx-auto shadow-sm hover:shadow active:scale-95"
-                  >
-                    {loadingMore ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Load More Opportunities'}
-                  </button>
-                </div>
+                {((activeTab === 'general' && results.length > 0) ||
+                  (activeTab === 'ausbildung' && ausbildungResults.length > 0) ||
+                  (activeTab === 'arbeitsagentur' && arbeitsagenturResults.length > 0) ||
+                  (activeTab === 'radiology' && radiologyResults.length > 0)) && (
+                  <div className="pt-10 text-center pb-8">
+                    <button
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 px-8 py-3.5 rounded-xl font-medium transition-all disabled:opacity-50 flex items-center gap-2 mx-auto shadow-sm hover:shadow active:scale-95"
+                    >
+                      {loadingMore ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Load More Opportunities'}
+                    </button>
+                  </div>
+                )}
               </motion.div>
             ) : searched && !loading ? (
               <motion.div 
