@@ -18,13 +18,14 @@ import { useApplicationCount } from './components/useApplicationCount';
 export default function App() {
   const { user, loading: authLoading, loginWithName, logout } = useAuth();
   const applicationCount = useApplicationCount();
-  const [activeTab, setActiveTab] = useState<'general' | 'ausbildung' | 'arbeitsagentur' | 'emails' | 'onlyEmails'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'ausbildung' | 'arbeitsagentur' | 'radiology' | 'emails' | 'onlyEmails'>('general');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [results, setResults] = useState<Hospital[]>([]);
   const [ausbildungResults, setAusbildungResults] = useState<Hospital[]>([]);
   const [arbeitsagenturResults, setArbeitsagenturResults] = useState<Hospital[]>([]);
+  const [radiologyResults, setRadiologyResults] = useState<Hospital[]>([]);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
@@ -61,6 +62,7 @@ export default function App() {
           const fetchedResults: Hospital[] = data.results || [];
           const fetchedAusbildungResults: Hospital[] = data.ausbildungResults || [];
           const fetchedArbeitsagenturResults: Hospital[] = data.arbeitsagenturResults || [];
+          const fetchedRadiologyResults: Hospital[] = data.radiologyResults || [];
           
           setResults(prevResults => {
             const newResultsList = [...prevResults];
@@ -108,6 +110,19 @@ export default function App() {
             });
             return hasNew ? newResultsList : prevResults;
           });
+
+          setRadiologyResults(prevResults => {
+            const newResultsList = [...prevResults];
+            let hasNew = false;
+            fetchedRadiologyResults.forEach(newHospital => {
+              const exists = prevResults.some(existing => existing.hospitalName.toLowerCase() === newHospital.hospitalName.toLowerCase());
+              if (!exists) {
+                newResultsList.push({ ...newHospital, isNew: true });
+                hasNew = true;
+              }
+            });
+            return hasNew ? newResultsList : prevResults;
+          });
         }
       } catch (err) {
         console.error('Background polling error:', err);
@@ -147,6 +162,7 @@ export default function App() {
       const newResults = data.results || [];
       const newAusbildungResults = data.ausbildungResults || [];
       const newArbeitsagenturResults = data.arbeitsagenturResults || [];
+      const newRadiologyResults = data.radiologyResults || [];
       
       const checkDuplicates = (targetList: Hospital[], generalList: Hospital[], ausbildungList: Hospital[]) => {
         return targetList.map(h => {
@@ -169,10 +185,12 @@ export default function App() {
           ...prev, 
           ...checkDuplicates(newArbeitsagenturResults, [...prev, ...newResults], [...ausbildungResults, ...newAusbildungResults])
         ]);
+        setRadiologyResults(prev => [...prev, ...newRadiologyResults]);
       } else {
         setResults(newResults);
         setAusbildungResults(newAusbildungResults);
         setArbeitsagenturResults(checkDuplicates(newArbeitsagenturResults, newResults, newAusbildungResults));
+        setRadiologyResults(newRadiologyResults);
       }
       
       setPage(targetPage);
@@ -302,6 +320,17 @@ export default function App() {
               <Search className="w-4 h-4" />
               Arbeitsagentur.de
             </button>
+            <button
+              onClick={() => setActiveTab('radiology')}
+              className={`px-4 xl:px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'radiology' 
+                  ? 'bg-white text-blue-700 shadow-sm border border-slate-200/50' 
+                  : 'text-slate-600 hover:text-slate-900 border border-transparent'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              Radiology
+            </button>
             <div className="w-px bg-slate-300 hidden md:block"></div>
             <button
               onClick={() => setActiveTab('emails')}
@@ -328,7 +357,7 @@ export default function App() {
           </div>
         </div>
 
-        {activeTab === 'general' || activeTab === 'ausbildung' || activeTab === 'arbeitsagentur' ? (
+        {activeTab === 'general' || activeTab === 'ausbildung' || activeTab === 'arbeitsagentur' || activeTab === 'radiology' ? (
           <>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -366,7 +395,7 @@ export default function App() {
 
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200/50">
             <h3 className="text-lg font-medium text-slate-700">
-              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length + ausbildungResults.length + arbeitsagenturResults.length}</span>}
+              {searched && !loading && <span className="text-slate-900 font-semibold">{results.length + ausbildungResults.length + arbeitsagenturResults.length + radiologyResults.length}</span>}
               {searched && !loading && " Total Opportunities Found"}
               {loading && "Searching for matching institutions..."}
               {!searched && !loading && "Enter a location to discover opportunities."}
@@ -385,7 +414,7 @@ export default function App() {
                 <Loader2 className="w-10 h-10 animate-spin text-blue-600 mb-4" />
                 <p>Querying hospital databases and Ausbildung.de...</p>
               </motion.div>
-            ) : results.length > 0 || ausbildungResults.length > 0 || arbeitsagenturResults.length > 0 ? (
+            ) : results.length > 0 || ausbildungResults.length > 0 || arbeitsagenturResults.length > 0 || radiologyResults.length > 0 ? (
               <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 
                 {activeTab === 'general' && (
@@ -414,6 +443,16 @@ export default function App() {
                     sourceIconColorClass="text-orange-600"
                     sourceBgColorClass="bg-orange-50"
                     badgeContent={<span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Source</span>}
+                  />
+                )}
+
+                {activeTab === 'radiology' && (
+                  <PaginatedHospitalList 
+                    hospitals={radiologyResults}
+                    sourceName="Radiology Ausbildung"
+                    sourceIconColorClass="text-purple-600"
+                    sourceBgColorClass="bg-purple-50"
+                    badgeContent={<span className="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide">Radiology</span>}
                   />
                 )}
                 
@@ -479,7 +518,8 @@ export default function App() {
             <AggregatedEmailTable 
               results={results} 
               ausbildungResults={ausbildungResults} 
-              arbeitsagenturResults={arbeitsagenturResults} 
+              arbeitsagenturResults={arbeitsagenturResults}
+              radiologyResults={radiologyResults} 
             />
           </motion.div>
         )}

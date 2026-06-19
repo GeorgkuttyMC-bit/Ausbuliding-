@@ -31,7 +31,7 @@ async function startServer() {
         },
       });
 
-      const [response, ausbildungResponse, arbeitsagenturResponse] = await Promise.all([
+      const [response, ausbildungResponse, arbeitsagenturResponse, radiologyResponse] = await Promise.all([
         ai.models.generateContent({
           model: 'gemini-3.1-flash-lite',
           contents: `Find German Ausbildung Nursing (Pflegefachmann/Pflegefachfrau) openings in hospitals and care homes. 
@@ -118,12 +118,42 @@ async function startServer() {
               },
             },
           },
+        }),
+        ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite',
+          contents: `Find German Ausbildung Radiology (Medizinisch-technischer Radiologieassistent - MTRA / Radiologietechnologe) apprenticeship/job vacancies in hospitals and clinics.
+                     Focus on ${query || 'various major cities across Germany'}. 
+                     This is page ${page} of the search results.
+                     Provide a list of 10 real (or highly realistic) hospitals and clinics.
+                     Make sure to precisely specify the city name in the 'location' field.
+                     Return the data in the requested JSON structure.`,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  hospitalName: { type: Type.STRING, description: 'The name of the hospital or institution.' },
+                  contactNumber: { type: Type.STRING, description: 'The contact phone number.' },
+                  mailId: { type: Type.STRING, description: 'The email address.' },
+                  location: { type: Type.STRING, description: 'The city or region.' },
+                  website: { type: Type.STRING, description: 'The official website URL.' },
+                  history: { type: Type.STRING, description: 'A brief background.' },
+                  openingDetails: { type: Type.STRING, description: 'Details about the openings.' },
+                  postedDaysAgo: { type: Type.INTEGER, description: 'Days ago posted.' }
+                },
+                required: ['hospitalName', 'contactNumber', 'mailId', 'location', 'website', 'history', 'openingDetails', 'postedDaysAgo'],
+              },
+            },
+          },
         })
       ]);
 
       let results = [];
       let ausbildungResults = [];
       let arbeitsagenturResults = [];
+      let radiologyResults = [];
       
       const verifyEmails = async (list: any[]) => {
         return Promise.all(list.map(async (hospital: any) => {
@@ -155,8 +185,11 @@ async function startServer() {
       if (arbeitsagenturResponse.text) {
         arbeitsagenturResults = await verifyEmails(JSON.parse(arbeitsagenturResponse.text.trim()) || []);
       }
+      if (radiologyResponse.text) {
+        radiologyResults = await verifyEmails(JSON.parse(radiologyResponse.text.trim()) || []);
+      }
 
-      res.json({ results, ausbildungResults, arbeitsagenturResults });
+      res.json({ results, ausbildungResults, arbeitsagenturResults, radiologyResults });
     } catch (error: any) {
       console.error('Error in /api/search:', error);
       const is429 = error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota');

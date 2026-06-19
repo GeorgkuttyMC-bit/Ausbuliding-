@@ -5,19 +5,20 @@ import { Hospital } from '../types';
 interface EmailEntry {
   hospitalName: string;
   mailId: string;
-  source: 'General' | 'Ausbildung' | 'Arbeitsagentur';
+  source: 'General' | 'Ausbildung' | 'Arbeitsagentur' | 'Radiology';
   isEmailVerified?: boolean | null;
   postedDaysAgo?: number;
 }
 
-export function AggregatedEmailTable({ results, ausbildungResults, arbeitsagenturResults }: { results: Hospital[], ausbildungResults: Hospital[], arbeitsagenturResults: Hospital[] }) {
+export function AggregatedEmailTable({ results, ausbildungResults, arbeitsagenturResults, radiologyResults }: { results: Hospital[], ausbildungResults: Hospital[], arbeitsagenturResults: Hospital[], radiologyResults?: Hospital[] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const allEmails: EmailEntry[] = [
     ...results.map(h => ({ ...h, source: 'General' as const })),
     ...ausbildungResults.map(h => ({ ...h, source: 'Ausbildung' as const })),
-    ...arbeitsagenturResults.map(h => ({ ...h, source: 'Arbeitsagentur' as const }))
+    ...arbeitsagenturResults.map(h => ({ ...h, source: 'Arbeitsagentur' as const })),
+    ...(radiologyResults || []).map(h => ({ ...h, source: 'Radiology' as const }))
   ].filter(h => h.mailId && h.mailId !== 'N/A' && h.mailId !== 'Not provided' && h.mailId.includes('@'));
 
   const totalPages = Math.ceil(allEmails.length / itemsPerPage);
@@ -187,8 +188,9 @@ function EmailRow({ entry }: { entry: EmailEntry }) {
   const getSourceColor = (source: string) => {
     switch (source) {
       case 'General': return 'bg-blue-50/50 hover:bg-blue-50';
-      case 'Ausbildung': return 'bg-purple-50/50 hover:bg-purple-50';
+      case 'Ausbildung': return 'bg-emerald-50/50 hover:bg-emerald-50';
       case 'Arbeitsagentur': return 'bg-orange-50/50 hover:bg-orange-50';
+      case 'Radiology': return 'bg-purple-50/50 hover:bg-purple-50';
       default: return 'bg-slate-50/50 hover:bg-slate-50';
     }
   };
@@ -196,8 +198,9 @@ function EmailRow({ entry }: { entry: EmailEntry }) {
   const getSourceBadge = (source: string) => {
     switch (source) {
       case 'General': return <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">General</span>;
-      case 'Ausbildung': return <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">Ausbildung.de</span>;
+      case 'Ausbildung': return <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">Ausbildung.de</span>;
       case 'Arbeitsagentur': return <span className="bg-orange-100 text-orange-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">Arbeitsagentur.de</span>;
+      case 'Radiology': return <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">Radiology</span>;
       default: return null;
     }
   };
